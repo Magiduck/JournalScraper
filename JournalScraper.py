@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Uses:
-<The terminal interactions with this script go here>
+./JournalScraper.py --url https://www.nature.com/nature/volumes/613/issues/7943
 """
 
 # Metadata
@@ -37,7 +37,7 @@ __created__ = "2023-01-13"
 __updated__ = "2022-01-13"
 __maintainer__ = "Tijs van Lieshout"
 __email__ = "t.van.lieshout@umcg.nl"
-__version__ = 0.1
+__version__ = 1.0
 __license__ = "GPLv3"
 __description__ = f"""{__title__} is a python script created on {__created__} by {__author__}.
                       Last update (version {__version__}) was on {__updated__} by {__maintainer__}.
@@ -46,31 +46,45 @@ __description__ = f"""{__title__} is a python script created on {__created__} by
 # Imports
 import argparse
 import os
+import logging
 
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+from pypdf import PdfMerger
 
 
 def main(args):
+  logging.basicConfig(filename=f"full_issue_{args.url.split('/')[-1]}.log")
   response=requests.get(args.url)
+
+  if not os.path.exists("intermediates/"):
+    os.makedirs("intermediates")
 
   if response.status_code != 200:
     print(f"Response status code = {response.status_code}")
     return
 
+  merger = PdfMerger()
   soup = BeautifulSoup(response.text, "html.parser")
   for anchor in tqdm(soup.findAll('a', href=True)):
     if "/articles/" in anchor['href']:
       article_id = anchor['href'].split("/")[-1]
       full_url = args.url.split(".com")[0] + ".com" + anchor['href'] + ".pdf"
-      #TODO: turn article download back on once finished
-      #article = requests.get(full_url, stream=True)
+      article = requests.get(full_url, stream=True)
 
-      path = f"{article_id}.pdf"
+      path = f"intermediates/{article_id}.pdf"
       if not os.path.exists(path):
         with open(path, 'wb') as f:
           f.write(article.content) 
+      try:
+        merger.append(path)
+      except:
+        logging.warning(f"Skipping Article: {full_url}")
+        continue
+
+  merger.write(f"full_issue_{args.url.split('/')[-1]}.pdf")
+  merger.close()
 
 
 if __name__ == '__main__':
