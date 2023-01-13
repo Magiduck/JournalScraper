@@ -1,7 +1,7 @@
-# USE AT YOUR OWN RISK: ACCOUNT MIGHT GET FLAGGED:
+# USE AT YOUR OWN RISK: ACCOUNT MIGHT GET FLAGGED
 
 ## JournalScraper
-This program can be used to download an entire issue of a journal:
+This program can be used to download an entire issue of a journal
 
 # installation:
 1. Install Python3
