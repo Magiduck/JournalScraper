@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-<A single line describing this program goes here.>
+JournalScraper to get all articles from journal issue in one pdf.
+Supported Journals:
+-Nature
 
 MIT License
 
@@ -29,7 +31,7 @@ Uses:
 """
 
 # Metadata
-__title__ = "Template for a CLI python script" 
+__title__ = "JournalScraper to get all articles from journal issue in one pdf"
 __author__ = "Tijs van Lieshout"
 __created__ = "2023-01-13"
 __updated__ = "2022-01-13"
@@ -43,14 +45,32 @@ __description__ = f"""{__title__} is a python script created on {__created__} by
 
 # Imports
 import argparse
+import os
 
-import newspaper
+import requests
+from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 
 def main(args):
-  site = newspaper.build(args.url)
-  print(site.article_urls())
-  return
+  response=requests.get(args.url)
+
+  if response.status_code != 200:
+    print(f"Response status code = {response.status_code}")
+    return
+
+  soup = BeautifulSoup(response.text, "html.parser")
+  for anchor in tqdm(soup.findAll('a', href=True)):
+    if "/articles/" in anchor['href']:
+      article_id = anchor['href'].split("/")[-1]
+      full_url = args.url.split(".com")[0] + ".com" + anchor['href'] + ".pdf"
+      #TODO: turn article download back on once finished
+      #article = requests.get(full_url, stream=True)
+
+      path = f"{article_id}.pdf"
+      if not os.path.exists(path):
+        with open(path, 'wb') as f:
+          f.write(article.content) 
 
 
 if __name__ == '__main__':
